@@ -66,13 +66,49 @@ def get_file_content(filename) -> str:
     else:
         return 'Файл не найден'
 
+
+def edit_line(filename, line_number, name, phone):
+    with open(filename, 'r+', encoding='utf-8') as file:
+        lines = file.readlines()
+        if line_number > len(lines) or line_number < 1:
+            return 'Строки под заданным номером не существует'
+        lines[line_number-1] = f"{line_number};{name};{phone}\n"
+        file.seek(0)
+        file.writelines(lines)
+    return 'Данные обновлены'
+
+
+def remove_line(filename, line_number):
+    with open(filename, 'r+', encoding='utf-8') as file:
+        lines = file.readlines()
+        if line_number > len(lines) or line_number < 1:
+            return 'Строки под заданным номером не существует'
+        removed_line = lines[line_number-1].replace('\n', '')
+        lines.pop(line_number-1)
+        shift = 0
+        for i, line in enumerate(lines):
+            if i < line_number - 1:
+                shift += len(line)
+            columns = line.split(';')
+            columns[0] = str(i+1)
+            lines[i] = ';'.join(columns)
+        file.seek(shift)
+        for i in range(line_number-1, len(lines)):
+            file.write(lines[i])
+        else:
+            file.truncate()
+    return f'Строка "{removed_line}" удалена'
+
+
 INFO_STRING = """
 Выберите режим работы
 1 - Вывести все данные
 2 - Добавление нового пользователя
-3 - Поиск
+3 - Поиск записи
 4 - Копировать строку в файл
 5 - Просмотр содержимого файла
+6 - Изменение записи
+7 - Удаление записи
 0 - Выход
 """
 
@@ -81,20 +117,31 @@ FILENAME = 'phonebook.txt'
 check_file(FILENAME)
 
 while True:
-    mode = int(input(f'{INFO_STRING}Ваш выбор: '))
-    if mode == 1:
-        print(read_all(FILENAME))
-    elif mode == 2:
-        add_new_user(input('Имя пользователя: '), input('Номер телефона: '), FILENAME)
-    elif mode == 3:
-        print(search_user(input('Введите строку для поиска: '), FILENAME))
-    elif mode == 4:
-        line_number = input('Номер копируемой записи: ')
-        if not line_number.isnumeric():
-            print('Ошибка ввода номера строки')
-            continue
-        print(copy_line_to_file(FILENAME, input('Целевой файл: '), int(line_number)))
-    elif mode == 5:
-        print(get_file_content(input('Введите название файла: ')))
-    elif mode == 0:
-        break
+    try:
+        mode = int(input(f'{INFO_STRING}Ваш выбор: '))
+        if mode == 1:
+            print(read_all(FILENAME))
+        elif mode == 2:
+            add_new_user(input('Имя пользователя: '), input('Номер телефона: '), FILENAME)
+        elif mode == 3:
+            print(search_user(input('Введите текст для поиска: '), FILENAME))
+        elif mode == 4:
+            print(copy_line_to_file(FILENAME, input('Целевой файл: '), int(input('Номер копируемой записи: '))))
+        elif mode == 5:
+            print(get_file_content(filename=input('Введите название файла: ')))
+        # Изменение строки в справочнике
+        elif mode == 6:
+            print(edit_line(
+                filename=FILENAME,
+                line_number=int(input('Номер записи для редактирования: ')),
+                name=input('Имя пользователя: '),
+                phone=input('Номер телефона: ')
+            ))
+        # Удаление строки в справочнике
+        elif mode == 7:
+            print(remove_line(FILENAME, int(input('Номер записи для удаления: '))))
+        elif mode == 0:
+            break
+    except Exception as e:
+        print(e)
+        continue
