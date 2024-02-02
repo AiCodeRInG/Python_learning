@@ -23,6 +23,7 @@ def read_all(filename) -> str:
         result = file.read()
     return result
 
+
 def search_user(data: str, filename) -> str:
     """
     Поиск записи по критерию data.
